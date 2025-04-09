@@ -4,7 +4,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProgramController;
+use App\Http\Controllers\LecturerController;
 use App\Http\Controllers\StudentCourseController;
+use App\Http\Controllers\StudentFinanceController;
 use App\Http\Controllers\AdminEnrollmentController;
 use App\Http\Controllers\StudentRegistrationController;
 
@@ -18,6 +20,9 @@ Route::post('/student/register', [StudentRegistrationController::class, 'registe
 Route::get('/student/courses', [StudentRegistrationController::class, 'getCoursesByProgram']);
 Route::get('/student/prerequisites', [StudentRegistrationController::class, 'getPrerequisites']);
 Route::post('/student/register-course', [StudentCourseController::class, 'register']);
+Route::get('/student/visual-courses', [StudentCourseController::class, 'visualCourses']);
+Route::get('/student/courses-prereqs', [StudentCourseController::class, 'getCoursesWithPrerequisites']);
+
 
 
 
@@ -25,8 +30,12 @@ Route::post('/admin/change-semester', [AdminEnrollmentController::class, 'change
 Route::get('/admin/current-semester', [AdminEnrollmentController::class, 'getCurrentSemester']);
 
 
-Route::get('/lecturer/enrolled-students', [LecturerController::class, 'getEnrolledStudents']);
 
+Route::get('/lecturer/courses', [LecturerController::class, 'getCoursesFromTracking']);
+Route::get('/lecturer/students', [LecturerController::class, 'getStudentsInCourse']);
+Route::post('/lecturer/grade', [LecturerController::class, 'submitGrade']);
+
+Route::get('/student/finance', [StudentFinanceController::class, 'getFinance']);
 
 
 

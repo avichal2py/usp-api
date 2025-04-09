@@ -63,13 +63,32 @@ class StudentRegistrationController extends Controller
 public function getCoursesByProgram(Request $request)
 {
     $request->validate([
-        'program_id' => 'required'
+        'program_id' => 'required',
+        'student_id' => 'required'
     ]);
 
     $courses = Course::where('program_id', $request->program_id)->get();
 
-    return response()->json($courses);
+    $track = \DB::table('student_track_course')
+        ->where('student_id', $request->student_id)
+        ->get()
+        ->groupBy('course_code');
+
+    $enriched = $courses->map(function ($course) use ($track) {
+        $trackEntry = $track[$course->course_code][0] ?? null;
+
+        return [
+            'course_code' => $course->course_code,
+            'course_name' => $course->course_name ?? 'Untitled',
+            'description' => $course->description ?? '',
+            'semester' => $course->semester ?? '',
+            'status' => $trackEntry->status ?? null,
+        ];
+    });
+
+    return response()->json($enriched);
 }
+
 
 public function getPrerequisites(Request $request)
 {
