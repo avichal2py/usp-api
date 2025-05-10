@@ -12,13 +12,17 @@ use App\Models\ActiveStudent;
 
 class AdminEnrollmentController extends Controller
 {
-    /**
-     * Display all new student applications.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        return NewStudentRegistration::all();
+        $applications = NewStudentRegistration::all();
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json($applications);
+        }
+
+        return view('admin.enrollments')->withApplications($applications);
     }
+
 
     /**
      * Approve a student application and create their account.
@@ -87,13 +91,16 @@ class AdminEnrollmentController extends Controller
         // Delete original application
         $application->delete();
 
-        return response()->json([
-            'message' => 'Student approved and notified.',
-            'student_id' => $studentId,
-            'password' => $plainPassword
-        ]);        
+        if (request()->expectsJson()) {
+            return response()->json([
+                'message' => 'Student approved and notified.',
+                'student_id' => $studentId,
+                'password' => $plainPassword
+            ]);
+        }
+    
+        return redirect()->back()->with('success', "Student approved! ID: $studentId Password: $plainPassword");
     }
-
     /**
      * Reject a student application.
      */
@@ -101,25 +108,41 @@ class AdminEnrollmentController extends Controller
     {
         $application = NewStudentRegistration::findOrFail($id);
         $application->delete();
-
-        return response()->json(['message' => 'Application rejected.']);
+    
+        if (request()->expectsJson()) {
+            return response()->json(['message' => 'Application rejected.']);
+        }
+    
+        return redirect()->back()->with('success', 'Application rejected.');
     }
 
 
     public function changeSemester(Request $request)
+    {
+        $request->validate([
+            'semester' => 'required|in:1,2'
+        ]);
+    
+        DB::table('alpha_control')->update([
+            'semester' => $request->semester
+        ]);
+    
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Semester changed to ' . $request->semester
+            ]);
+        }
+    
+        return redirect()->back()->with('success', 'Semester changed to Semester ' . $request->semester . ' successfully.');
+    }
+    
+
+public function showSemesterForm()
 {
-    $request->validate([
-        'semester' => 'required|in:1,2'
-    ]);
-
-    DB::table('alpha_control')->update([
-        'semester' => $request->semester
-    ]);
-
-    return response()->json([
-        'message' => 'Semester changed to ' . $request->semester
-    ]);
+    $currentSemester = DB::table('alpha_control')->value('semester');
+    return view('admin.semester', compact('currentSemester'));
 }
+
 
 public function getCurrentSemester()
 {

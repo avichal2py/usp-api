@@ -2,9 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\GradeRecheck;
+
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\StudentTrackCourse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+
 
 class StudentCourseController extends Controller
 {
@@ -14,54 +19,56 @@ class StudentCourseController extends Controller
             'student_id' => 'required|string',
             'course_code' => 'required|string',
         ]);
-
+    
         $studentId = $request->student_id;
         $courseCode = $request->course_code;
-
-        $currentSemester = DB::table('alpha_control')->where('id', 1)->value('semester');
+    
+        $currentSemester = DB::table('alpha_control')->value('semester');
         $course = DB::table('courses')->where('course_code', $courseCode)->first();
-
+    
         if (!$course) {
-            return response()->json(['message' => 'Course not found.'], 404);
+            return $request->expectsJson()
+                ? response()->json(['message' => 'Course not found.'], 404)
+                : back()->withErrors(['Course not found.']);
         }
-
+    
         if ($course->semester != $currentSemester) {
-            return response()->json(['message' => 'Course not available this semester.'], 403);
+            return $request->expectsJson()
+                ? response()->json(['message' => 'Course not available this semester.'], 403)
+                : back()->withErrors(['This course is not available this semester.']);
         }
-
-        // Check prerequisites
+    
         $prereqs = DB::table('prerequisites')->where('course_code', $courseCode)->pluck('prereq_code');
         if ($prereqs->isNotEmpty()) {
             $completed = DB::table('student_track_course')
                 ->where('student_id', $studentId)
                 ->where('status', 'Completed')
                 ->pluck('course_code');
-
+    
             $missing = $prereqs->diff($completed);
             if ($missing->isNotEmpty()) {
-                return response()->json([
-                    'message' => 'Missing prerequisites.',
-                    'missing' => $missing->values(),
-                ], 403);
+                $msg = 'Missing prerequisites: ' . $missing->implode(', ');
+                return $request->expectsJson()
+                    ? response()->json(['message' => 'Missing prerequisites.', 'missing' => $missing->values()])
+                    : back()->withErrors([$msg]);
             }
         }
-
-        // Toggle registration
+    
         $existing = DB::table('student_track_course')
             ->where('student_id', $studentId)
             ->where('course_code', $courseCode)
             ->where('status', 'Enrolled')
             ->first();
-
+    
         if ($existing) {
-            // Unregister
             DB::table('student_track_course')
                 ->where('id', $existing->id)
                 ->delete();
-
-            return response()->json(['message' => 'Course unregistered.']);
+    
+            return $request->expectsJson()
+                ? response()->json(['message' => 'Course unregistered.'])
+                : back()->with('success', 'Course unregistered.');
         } else {
-            // Register
             DB::table('student_track_course')->insert([
                 'student_id' => $studentId,
                 'course_code' => $courseCode,
@@ -69,67 +76,100 @@ class StudentCourseController extends Controller
                 'status' => 'Enrolled',
                 'registered_at' => now(),
             ]);
-
-            return response()->json(['message' => 'Course registered successfully.']);
+    
+            return $request->expectsJson()
+                ? response()->json(['message' => 'Course registered successfully.'])
+                : back()->with('success', 'Course registered successfully.');
         }
     }
+    
 
     public function visualCourses(Request $request)
-{
-    $studentId = $request->query('student_id');
-
-    $student = DB::table('active_students')->where('student_id', $studentId)->first();
-    if (!$student) {
-        return response()->json(['message' => 'Student not found.'], 404);
-    }
-
-    $courses = DB::table('courses')
-        ->where('program_id', $student->program_id)
-        ->get()
-        ->groupBy('level');
-
-    $track = DB::table('student_track_course')
-        ->where('student_id', $studentId)
-        ->get()
-        ->groupBy('course_code');
-
-    $result = [];
-
-    foreach ($courses as $level => $groupedCourses) {
-        $result[] = [
-            'level' => $level,
-            'courses' => $groupedCourses->map(function ($course) use ($track) {
-                $trackEntry = $track[$course->course_code][0] ?? null;
-
-                $label = $course->course_name;
-                $grade = null;
-                $semester = null;
-
-                if ($trackEntry) {
-                    if ($trackEntry->status === 'Completed') {
-                        $label .= ' ✅';
-                    } elseif ($trackEntry->status === 'Enrolled') {
-                        $label .= ' (R)';
+    {
+        // 🟢 Check for student ID from session or query
+        $student = null;
+        $studentId = null;
+    
+        if ($request->has('student_id')) {
+            // API usage: from query param
+            $studentId = $request->query('student_id');
+            $student = DB::table('active_students')->where('student_id', $studentId)->first();
+        } elseif (session('role') === 'student' && session('user')) {
+            // Web usage: from session
+            $student = session('user');
+            $studentId = $student->student_id;
+        }
+    
+        // 🔴 Fallback: if no valid student info
+        if (!$studentId || !$student) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Student not found.'], 404);
+            } else {
+                return redirect()->route('login')->with('error', 'Unauthorized access.');
+            }
+        }
+    
+        // 🧠 Fetch courses by program level
+        $courses = DB::table('courses')
+            ->where('program_id', $student->program_id)
+            ->get()
+            ->groupBy('level');
+    
+        $track = DB::table('student_track_course')
+            ->where('student_id', $studentId)
+            ->get()
+            ->groupBy('course_code');
+    
+        $result = [];
+    
+        foreach ($courses as $level => $groupedCourses) {
+            $result[] = [
+                'level' => $level,
+                'courses' => $groupedCourses->map(function ($course) use ($track) {
+                    $trackEntry = $track[$course->course_code][0] ?? null;
+    
+                    $label = $course->course_name;
+                    $grade = null;
+                    $semester = null;
+                    $status = 'Not Started';
+    
+                    if ($trackEntry) {
+                        if ($trackEntry->status === 'Completed') {
+                            $label .= ' ✅';
+                            $status = 'Completed';
+                        } elseif ($trackEntry->status === 'Enrolled') {
+                            $label .= ' (R)';
+                            $status = 'Enrolled';
+                        }
+    
+                        $grade = $trackEntry->grade ?? null;
+                        $semester = $trackEntry->semester ?? null;
                     }
-
-                    $grade = $trackEntry->grade ?? null;
-                    $semester = $trackEntry->semester ?? null;
-                }
-
-                return [
-                    'course_code' => $course->course_code,
-                    'label' => $label,
-                    'description' => $course->description,
-                    'grade' => $grade,
-                    'semester' => $semester,
-                ];
-            })->values(),
-        ];
+    
+                    return [
+                        'course_code' => $course->course_code,
+                        'label' => $label,
+                        'description' => $course->description,
+                        'grade' => $grade,
+                        'semester' => $course->semester,
+                        'status' => $status,
+                    ];
+                })->values(),
+            ];
+        }
+    
+        // ✅ Return based on request type
+        if ($request->wantsJson()) {
+            return response()->json($result);
+        } else {
+            return view('student.visualizeCourse', [
+                'student' => $student,
+                'levels' => $result,
+            ]);
+        }
     }
-
-    return response()->json($result);
-}
-
+    
+    
 
     public function getCoursesWithPrerequisites(Request $request)
 {
@@ -155,5 +195,175 @@ class StudentCourseController extends Controller
 
     return response()->json($result);
 }
+
+
+// public function downloadCompletedCourses()
+// {
+//     $role = session('role');
+//     $student = session('user');
+
+//     if ($role !== 'student' || !$student) {
+//         return redirect()->route('login')->with('error', 'Unauthorized access.');
+//     }
+
+//     $studentId = $student->student_id;
+
+//     $courses = DB::table('courses')
+//         ->where('program_id', $student->program_id)
+//         ->get();
+
+//     $track = DB::table('student_track_course')
+//         ->where('student_id', $studentId)
+//         ->where('status', 'Completed')
+//         ->get()
+//         ->keyBy('course_code');
+
+//     $completedCourses = $courses->filter(function ($course) use ($track) {
+//         return $track->has($course->course_code);
+//     })->map(function ($course) use ($track) {
+//         $trackEntry = $track[$course->course_code];
+//         return [
+//             'course_code' => $course->course_code,
+//             'course_name' => $course->course_name,
+//             'grade' => $trackEntry->grade ?? 'N/A',
+//             'semester' => $trackEntry->semester ?? 'N/A',
+//         ];
+//     })->values();
+
+//     $pdf = Pdf::loadView('student.pdfReport', [
+//         'student' => $student,
+//         'courses' => $completedCourses,
+//     ]);
+
+//     return $pdf->download('usp_completed_courses_report.pdf');
+// }
+
+
+public function downloadCompletedCourses()
+{
+    $role = session('role');
+    $student = session('user');
+
+    if ($role !== 'student' || !$student) {
+        return redirect()->route('login')->with('error', 'Unauthorized access.');
+    }
+
+    $student = session('user'); // object from DB
+
+    $studentId = $student->student_id;
+    
+    $courses = DB::table('courses')
+        ->where('program_id', $student->program_id)
+        ->get();
+    
+    $track = DB::table('student_track_course')
+        ->where('student_id', $studentId)
+        ->where('status', 'Completed')
+        ->get()
+        ->keyBy('course_code');
+    
+    $completedCourses = $courses->filter(function ($course) use ($track) {
+        return $track->has($course->course_code);
+    })->map(function ($course) use ($track) {
+        $trackEntry = $track[$course->course_code];
+        return [
+            'course_code' => $course->course_code,
+            'course_name' => $course->course_name,
+            'grade' => $trackEntry->grade ?? 'N/A',
+            'semester' => $trackEntry->semester ?? 'N/A',
+        ];
+    })->values()->toArray();
+    
+    $response = Http::withHeaders([
+        'Accept' => 'application/pdf',
+    ])->post('http://localhost:5001/generate-pdf', [
+        'student' => [
+            'name' => $student->first_name  ?? 'Unknown',
+            'student_id' => $student->student_id,
+            'program_id' => $student->program_id,
+        ],
+        'courses' => $completedCourses
+    ]);
+    
+    if ($response->successful()) {
+        return response($response->body(), 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename=usp_completed_courses_report.pdf');
+    } else {
+        return redirect()->back()->with('error', 'PDF generation failed.');
+    }
+    
+}
+
+public function batchPrerequisites(Request $request)
+{
+    $courseCodes = $request->input('course_codes', []);
+
+    $prereqs = DB::table('prerequisites')
+        ->whereIn('course_code', $courseCodes)
+        ->get()
+        ->groupBy('course_code');
+
+    return response()->json($prereqs);
+}
+
+
+public function showRecheckCourses()
+{
+    $student = session('user');
+
+    $completedCourses = DB::table('student_track_course')
+        ->where('student_id', $student->student_id)
+        ->where('status', 'Completed')
+        ->join('courses', 'student_track_course.course_code', '=', 'courses.course_code')
+        ->select('student_track_course.course_code', 'courses.course_name', 'student_track_course.grade')
+        ->get();
+
+    return view('student.recheckCourses', compact('student', 'completedCourses'));
+}
+
+public function applyGradeRecheck(Request $request)
+{
+    $request->validate([
+        'course_code' => 'required|string',
+        'reason' => 'nullable|string',
+    ]);
+
+    $studentId = session('user')->student_id;
+
+    // 🔍 Get the current grade from student_track_course
+    $track = DB::table('student_track_course')
+        ->where('student_id', $studentId)
+        ->where('course_code', $request->course_code)
+        ->first();
+
+    if (!$track || $track->status !== 'Completed') {
+        return redirect()->back()->with('error', 'You can only request a recheck for completed courses.');
+    }
+
+    // ✅ Create recheck with old grade
+    GradeRecheck::create([
+        'student_id' => $studentId,
+        'course_code' => $request->course_code,
+        'reason' => $request->reason,
+        'old_grade' => $track->grade, // ✅ Set old grade
+    ]);
+
+    return redirect()->back()->with('success', 'Grade recheck request submitted.');
+}
+
+
+
+public function dismissAllNotifications(Request $request)
+{
+    $ids = explode(',', $request->notification_ids);
+
+    DB::table('grade_rechecks')
+        ->whereIn('id', $ids)
+        ->update(['student_notified' => true]);
+
+    return redirect()->back()->with('success', 'Notifications dismissed.');
+}
+
 
 }

@@ -54,4 +54,71 @@ class AuthController extends Controller
         'user' => $details,
     ]);
 }
+
+
+
+
+
+public function showLoginForm()
+{
+    return view('login'); 
+}
+
+public function handleWebLogin(Request $request)
+{
+    $request->validate([
+        'login_as' => 'required|in:employee,student',
+        'identifier' => 'required',
+        'password' => 'required',
+    ]);
+
+    if ($request->login_as === 'employee') {
+        $user = User::where('emp_id', $request->identifier)->first();
+
+        if (!$user || $user->password !== md5($request->password)) {
+            return back()->withErrors(['Invalid credentials']);
+        }
+
+        session([
+            'user' => $user, 
+            'role' => 'employee',
+        ]);
+
+        if ($user->role == 1) {
+            return redirect()->route('admin.home');
+        } elseif ($user->role == 2) {
+            return redirect()->route('lecturer.home');
+        } else {
+            return redirect('/');
+        }
+
+    } else {
+        $student = DB::table('student_login')
+            ->where('student_id', $request->identifier)
+            ->first();
+
+        if (!$student || md5($request->password) !== $student->password) {
+            return back()->withErrors(['Invalid credentials']);
+        }
+
+        $details = DB::table('active_students')
+            ->where('student_id', $student->student_id)
+            ->first();
+
+        session([
+            'user' => $details, // ✅ unified key
+            'role' => 'student',
+        ]);
+
+        return redirect()->route('student.home');
+    }
+}
+
+
+public function logout()
+{
+    session()->flush();
+    return redirect('/');
+}
+
 }

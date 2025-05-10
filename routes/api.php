@@ -36,6 +36,7 @@ Route::get('/lecturer/students', [LecturerController::class, 'getStudentsInCours
 Route::post('/lecturer/grade', [LecturerController::class, 'submitGrade']);
 
 Route::get('/student/finance', [StudentFinanceController::class, 'getFinance']);
+Route::post('/student/prerequisites/batch', [StudentCourseController::class, 'batchPrerequisites']);
 
 
 
