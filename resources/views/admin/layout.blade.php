@@ -240,6 +240,10 @@
           <i class="fas fa-users"></i>
           <span>Enrollments</span>
         </a>
+        <a href="{{ route('admin.restrict.view') }}" class="nav-link {{ request()->routeIs('admin.restrict.view') ? 'active' : '' }}">
+          <i class="fas fa-dollar"></i>
+          <span>Pending Fee</span>
+        </a>
       </nav>
 
       <div class="logout-container">

@@ -13,7 +13,7 @@
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background: linear-gradient(135deg, rgba(41,163,163,0.9) 0%, rgba(20,95,140,0.9) 100%), 
-                        url('{{ asset('images/bg.jpg') }}') no-repeat center center fixed;
+            url('{{ asset('images/bg.jpg') }}') no-repeat center center fixed;
             background-size: cover;
             min-height: 100vh;
             display: flex;

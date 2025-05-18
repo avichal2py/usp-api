@@ -9,6 +9,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\StudentTrackCourse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\ConnectionException;
 
 
 class StudentCourseController extends Controller
@@ -248,20 +250,18 @@ public function downloadCompletedCourses()
         return redirect()->route('login')->with('error', 'Unauthorized access.');
     }
 
-    $student = session('user'); // object from DB
-
     $studentId = $student->student_id;
-    
+
     $courses = DB::table('courses')
         ->where('program_id', $student->program_id)
         ->get();
-    
+
     $track = DB::table('student_track_course')
         ->where('student_id', $studentId)
         ->where('status', 'Completed')
         ->get()
         ->keyBy('course_code');
-    
+
     $completedCourses = $courses->filter(function ($course) use ($track) {
         return $track->has($course->course_code);
     })->map(function ($course) use ($track) {
@@ -273,27 +273,36 @@ public function downloadCompletedCourses()
             'semester' => $trackEntry->semester ?? 'N/A',
         ];
     })->values()->toArray();
-    
-    $response = Http::withHeaders([
-        'Accept' => 'application/pdf',
-    ])->post('http://localhost:5001/generate-pdf', [
-        'student' => [
-            'name' => $student->first_name  ?? 'Unknown',
-            'student_id' => $student->student_id,
-            'program_id' => $student->program_id,
-        ],
-        'courses' => $completedCourses
-    ]);
-    
-    if ($response->successful()) {
-        return response($response->body(), 200)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename=usp_completed_courses_report.pdf');
-    } else {
-        return redirect()->back()->with('error', 'PDF generation failed.');
+
+    try {
+        $response = Http::withHeaders([
+            'Accept' => 'application/pdf',
+        ])->timeout(5)->post('http://localhost:5001/generate-pdf', [
+            'student' => [
+                'first_name' => $student->first_name ?? '',
+                'last_name' => $student->last_name ?? '',
+                'student_id' => $student->student_id,
+                'program_id' => $student->program_id,
+            ],
+            'courses' => $completedCourses
+        ]);
+
+        if ($response->successful()) {
+            return response($response->body(), 200)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'attachment; filename=usp_completed_courses_report.pdf');
+        }
+
+    } catch (ConnectionException | RequestException $e) {
+        // Log the error if needed
+        \Log::error('PDF Service unavailable: ' . $e->getMessage());
     }
-    
+
+    // If server fails or times out
+    return response()->view('errors.feature-unavailable', [], 503);
 }
+
+
 
 public function batchPrerequisites(Request $request)
 {

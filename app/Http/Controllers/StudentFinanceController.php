@@ -80,23 +80,48 @@ public function showFinancePage()
 
     $studentId = $student->student_id;
 
+    // Get enrolled courses
     $enrolledCourses = DB::table('student_track_course')
         ->where('student_id', $studentId)
         ->where('status', 'Enrolled')
         ->pluck('course_code');
 
-    $coursesWithPrices = DB::table('course_price')
+    // Get course prices
+    $prices = DB::table('course_price')
         ->whereIn('course_code', $enrolledCourses)
-        ->get();
+        ->get()
+        ->keyBy('course_code');
 
-    $subtotal = $coursesWithPrices->sum('course_price');
+    // Get payment statuses
+    $payments = DB::table('student_payments')
+        ->where('student_id', $studentId)
+        ->whereIn('course_code', $enrolledCourses)
+        ->get()
+        ->keyBy('course_code');
+
+    $courseDetails = [];
+    $subtotal = 0;
+
+    foreach ($enrolledCourses as $code) {
+        $price = $prices[$code]->course_price ?? 0;
+        $paymentStatus = $payments[$code]->status ?? 'Unpaid';
+
+        $courseDetails[] = (object) [
+            'course_code' => $code,
+            'course_price' => $price,
+            'payment_status' => $paymentStatus,
+        ];
+
+        $subtotal += $price;
+    }
+
     $serviceFee = 50;
     $total = $subtotal + $serviceFee;
 
     return view('student.finance', [
         'student' => $student,
-        'finance' => [ // ✅ Now the Blade will have $finance
-            'courses' => $coursesWithPrices,
+        'finance' => [
+            'courses' => $courseDetails,
             'subtotal' => $subtotal,
             'service_fee' => $serviceFee,
             'total' => $total,
@@ -104,5 +129,13 @@ public function showFinancePage()
     ]);
 }
 
+
+    public function showPaymentRequired(Request $request)
+    {
+        $courseCode = $request->session()->get('course_code');
+        $message = $request->session()->get('message');
+
+        return view('payment-required', compact('courseCode', 'message'));
+    }
 
 }

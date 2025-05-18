@@ -35,6 +35,11 @@ return new class extends Migration
             $table->longText('payload');
             $table->integer('last_activity')->index();
         });
+
+        Schema::table('active_students', function (Blueprint $table) {
+        $table->boolean('is_restricted')->default(false);
+    });
+
     }
 
     /**

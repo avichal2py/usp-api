@@ -15,7 +15,7 @@
       --text-dark: #333333;
       --bg-light: #f5f7fa;
       --sidebar-width: 250px;
-      --header-height: 60px;
+      --header-height: 70px;
     }
 
     * {
@@ -28,6 +28,11 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       color: var(--text-dark);
       background-color: var(--bg-light);
+      min-height: 100vh;
+    }
+
+    /* Layout Structure */
+    .app-container {
       display: flex;
       min-height: 100vh;
     }
@@ -54,6 +59,7 @@
     .sidebar-header h2 {
       font-size: 1.2rem;
       font-weight: 600;
+      margin: 0;
     }
 
     .nav-menu {
@@ -126,15 +132,16 @@
       flex-direction: column;
     }
 
-    /* Header Styles */
+    /* Header Styles - Fixed alignment */
     .top-header {
       background-color: #ffffff;
-      padding: 0 25px;
+      padding: 0 30px;
       height: var(--header-height);
       display: flex;
       align-items: center;
-      justify-content: space-between;
       box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      position: sticky;
+      top: 0;
       z-index: 90;
     }
 
@@ -145,8 +152,8 @@
     }
 
     .user-avatar {
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       background-color: var(--teal-primary);
       color: white;
@@ -154,16 +161,28 @@
       align-items: center;
       justify-content: center;
       font-weight: bold;
+      font-size: 16px;
+      flex-shrink: 0; /* Prevents avatar from shrinking */
+    }
+
+    .user-name {
+      font-weight: 500;
+      color: var(--text-dark);
+      white-space: nowrap; /* Prevents text from wrapping */
     }
 
     /* Content Area */
-    .content-area {
+    .content-wrapper {
       flex: 1;
-      padding: 25px;
+      padding: 30px;
+    }
+
+    .content-area {
       background-color: #ffffff;
-      margin: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      min-height: calc(100vh - var(--header-height) - 60px);
+      padding: 25px;
     }
 
     .page-header {
@@ -176,7 +195,7 @@
     /* Footer Styles */
     .main-footer {
       background-color: #ffffff;
-      padding: 15px 25px;
+      padding: 15px 30px;
       text-align: center;
       font-size: 0.85rem;
       color: #666;
@@ -189,7 +208,7 @@
         overflow: hidden;
       }
       
-      .sidebar-header h2, .nav-link span {
+      .sidebar-header h2, .nav-link span, .logout-btn span {
         display: none;
       }
       
@@ -210,69 +229,75 @@
         margin-left: 70px;
       }
 
-      .content-area {
-        margin: 10px;
+      .content-wrapper {
         padding: 15px;
+      }
+
+      .content-area {
+        padding: 20px;
+      }
+
+      .user-name {
+        display: none;
       }
     }
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <h2>Lecturer Panel</h2>
-    </div>
-    
-    <nav class="nav-menu">
-      <a href="{{ route('lecturer.home') }}" class="nav-link {{ request()->routeIs('lecturer.home') ? 'active' : '' }}">
-        <i class="fas fa-tachometer-alt"></i>
-        <span>Dashboard</span>
-      </a>
-      <a href="{{ route('lecturer.grade') }}" class="nav-link {{ request()->routeIs('lecturer.grade') ? 'active' : '' }}">
-        <i class="fas fa-graduation-cap"></i>
-        <span>Grade Students</span>
-      </a>
-      <a href="{{ route('lecturer.gradeRechecks') }}" class="nav-link {{ request()->routeIs('lecturer.gradeRechecks') ? 'active' : '' }}">
-        <i class="fas fa-redo"></i>
-        <span>Grade Rechecks</span>
-        @if(isset($recheckCount) && $recheckCount > 0)
-          <span class="notification-badge">{{ $recheckCount }}</span>
-        @endif
-      </a>
-    </nav>
-
-    <div class="logout-container">
-      <form method="POST" action="{{ route('logout') }}">
-        @csrf
-        <button class="logout-btn" type="submit">
-          <i class="fas fa-sign-out-alt"></i>
-          <span>Logout</span>
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <div class="main-content">
-    <!-- Header -->
-    <header class="top-header">
-      <div class="user-info">
-        <span>Welcome, Lecturer</span>
-        <div class="user-avatar">L</div>
+  <div class="app-container">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>Lecturer Panel</h2>
       </div>
-    </header>
+      
+      <nav class="nav-menu">
+        <a href="{{ route('lecturer.home') }}" class="nav-link {{ request()->routeIs('lecturer.home') ? 'active' : '' }}">
+          <i class="fas fa-tachometer-alt"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="{{ route('lecturer.grade') }}" class="nav-link {{ request()->routeIs('lecturer.grade') ? 'active' : '' }}">
+          <i class="fas fa-graduation-cap"></i>
+          <span>Grade Students</span>
+        </a>
+        <a href="{{ route('lecturer.gradeRechecks') }}" class="nav-link {{ request()->routeIs('lecturer.gradeRechecks') ? 'active' : '' }}">
+          <i class="fas fa-redo"></i>
+          <span>Grade Rechecks</span>
+          @if(isset($recheckCount) && $recheckCount > 0)
+            <span class="notification-badge">{{ $recheckCount }}</span>
+          @endif
+        </a>
+      </nav>
 
-    <!-- Main Content -->
-    <main class="content-area">
-      @yield('content')
-    </main>
+      <div class="logout-container">
+        <form method="POST" action="{{ route('logout') }}">
+          @csrf
+          <button class="logout-btn" type="submit">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+          </button>
+        </form>
+      </div>
+    </div>
 
-    <!-- Footer -->
-    <footer class="main-footer">
-      <p>&copy; {{ date('Y') }} University Lecturer Panel. All rights reserved.</p>
-    </footer>
+    <div class="main-content">
+      <header class="top-header">
+        <div class="user-info">
+          <span class="user-name">Welcome, {{ Auth::user()->name ?? 'Lecturer' }}</span>
+          <div class="user-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'L', 0, 1)) }}</div>
+        </div>
+      </header>
+
+      <div class="content-wrapper">
+        <main class="content-area">
+          @yield('content')
+        </main>
+      </div>
+
+      <footer class="main-footer">
+        <p>&copy; {{ date('Y') }} University Lecturer Panel. All rights reserved.</p>
+      </footer>
+    </div>
   </div>
-
 </body>
 </html>

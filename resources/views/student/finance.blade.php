@@ -31,12 +31,22 @@
 
     <div class="card">
         <div class="section-title">📘 Registered Courses</div>
-        @foreach ($finance['courses'] as $course)
-            <div class="course-item">
-                <span class="course-code">{{ $course->course_code }}</span>
-                <span class="course-price">${{ $course->course_price }}</span>
-            </div>
-        @endforeach
+    @foreach ($finance['courses'] as $course)
+        <div class="course-item">
+            <span class="course-code">{{ $course->course_code }}</span>
+            <span class="course-price">
+                ${{ $course->course_price }}
+                @if ($course->payment_status === 'Paid')
+                    <span style="color: green; font-weight: 600;">✔ Paid</span>
+                @elseif ($course->payment_status === 'Partial')
+                    <span style="color: orange; font-weight: 600;">⏳ Partial</span>
+                @else
+                    <span style="color: red; font-weight: 600;">❌ Unpaid</span>
+                @endif
+            </span>
+        </div>
+    @endforeach
+
     </div>
 
     <div class="card">

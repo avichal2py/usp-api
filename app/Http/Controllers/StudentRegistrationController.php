@@ -11,63 +11,67 @@ use Illuminate\Support\Facades\Storage;
 
 class StudentRegistrationController extends Controller
 {
-    public function register(Request $request)
-    {
-        $validated = $request->validate([
-            'first_name' => 'required|string',
-            'last_name' => 'required|string',
-            'dob' => 'required|date',
-            'gender' => 'required|string',
-            'email_address' => 'required|email',
-            'phone' => 'required',
-            'program_id' => 'required|string',
-    
-            // Optional fields
-            'citizenship' => 'nullable|string',
-            'residential_address' => 'nullable|string',
-            'postal_address' => 'nullable|string',
-            'city' => 'nullable|string',
-            'nation' => 'nullable|string',
-    
-            // Emergency Contact
-            'ec_firstname' => 'nullable|string',
-            'ec_lastname' => 'nullable|string',
-            'ec_othername' => 'nullable|string',
-            'ec_relationship' => 'nullable|string',
-            'ec_residential_address' => 'nullable|string',
-            'ec_city' => 'nullable|string',
-            'ec_nation' => 'nullable|string',
-            'ec_phone' => 'nullable|string',
-        ]);
-    
-        // ✅ Validate program
-        $program = DB::table('programs')->where('program_id', $validated['program_id'])->first();
-        if (!$program) {
+public function register(Request $request)
+{
+    $validated = $request->validate([
+        'first_name' => 'required|string',
+        'last_name' => 'required|string',
+        'dob' => 'required|date',
+        'gender' => 'required|string',
+        'email_address' => 'required|email',
+        'phone' => 'required',
+        'program_id' => 'required|string',
+
+        // Optional fields
+        'citizenship' => 'nullable|string',
+        'residential_address' => 'nullable|string',
+        'postal_address' => 'nullable|string',
+        'city' => 'nullable|string',
+        'nation' => 'nullable|string',
+
+        // Emergency Contact
+        'ec_firstname' => 'nullable|string',
+        'ec_lastname' => 'nullable|string',
+        'ec_othername' => 'nullable|string',
+        'ec_relationship' => 'nullable|string',
+        'ec_residential_address' => 'nullable|string',
+        'ec_city' => 'nullable|string',
+        'ec_nation' => 'nullable|string',
+        'ec_phone' => 'nullable|string',
+    ]);
+
+    $program = DB::table('programs')->where('program_id', $validated['program_id'])->first();
+    if (!$program) {
+        if ($request->expectsJson()) {
             return response()->json(['message' => 'Invalid program selected.'], 422);
         }
-    
-        $validated['program_name'] = $program->program_name;
-    
-        // ✅ Handle file storage without saving path in DB
-        if ($request->hasFile('tertiary_qualification')) {
-            $file = $request->file('tertiary_qualification');
-            $path = $file->store('uploads/qualifications', 'public');
-            \Log::info('Tertiary qualification uploaded to: ' . $path);
-            // You can also email or notify admin with file path if needed
-        }
-    
-        // ✅ Meta
-        $validated['application_id'] = uniqid();
-        $validated['registration_date'] = now();
-    
-        // ✅ Save application (without the file path)
-        $application = NewStudentRegistration::create($validated);
-    
+        return back()->withInput()->withErrors(['program_id' => 'Invalid program selected.']);
+    }
+
+    $validated['program_name'] = $program->program_name;
+
+    if ($request->hasFile('tertiary_qualification')) {
+        $file = $request->file('tertiary_qualification');
+        $path = $file->store('uploads/qualifications', 'public');
+        \Log::info('Tertiary qualification uploaded to: ' . $path);
+    }
+
+    $validated['application_id'] = uniqid();
+    $validated['registration_date'] = now();
+
+    $application = NewStudentRegistration::create($validated);
+
+    if ($request->expectsJson()) {
         return response()->json([
             'message' => 'Registration successful',
             'application_id' => $application->application_id,
         ], 201);
     }
+
+    return redirect()->route('student.register')
+        ->with('success', 'Registration submitted successfully. Your Application ID is: ' . $application->application_id);
+}
+
     
 
     

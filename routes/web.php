@@ -57,7 +57,7 @@ Route::post('/admin/enrollments/{id}/approve', [AdminEnrollmentController::class
 Route::post('/admin/enrollments/{id}/reject', [AdminEnrollmentController::class, 'reject'])->name('admin.enrollments.reject');
 Route::post('/student/register-course', [StudentCourseController::class, 'register'])->name('student.register-course');
 Route::get('/student/courses', [StudentRegistrationController::class, 'getCoursesByProgram'])
-    ->name('student.courses');
+    ->name('student.courses')->middleware('restrict.student');
 Route::get('/student/visual-courses', [StudentCourseController::class, 'visualCourses'])->name('student.visualizeCourse');
 Route::get('/student/download-completed-courses', [StudentCourseController::class, 'downloadCompletedCourses'])
     ->name('student.downloadCompletedCourses');
@@ -73,3 +73,13 @@ Route::post('/lecturer/grade-rechecks/{id}/reject', [LecturerController::class, 
 
 
 Route::post('/student/dismiss-all-notifications', [StudentCourseController::class, 'dismissAllNotifications'])->name('student.dismissAllNotifications');
+
+
+Route::get('/payment-required', [StudentFinanceController::class, 'showPaymentRequired'])
+    ->name('payment.required');
+
+
+Route::get('/admin/restrict-students', [AdminEnrollmentController::class, 'manageRestrictions'])->name('admin.restrict.view');
+Route::post('/admin/toggle-student-restriction/{id}', [AdminEnrollmentController::class, 'toggleRestriction'])->name('admin.restrict.toggle');
+
+

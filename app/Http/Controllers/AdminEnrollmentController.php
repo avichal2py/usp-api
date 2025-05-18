@@ -157,5 +157,26 @@ public function getCurrentSemester()
     ]);
 }
 
+public function manageRestrictions()
+{
+    $students = DB::table('active_students')->get();
+    return view('admin.restrictions', compact('students'));
+}
+
+public function toggleRestriction($id)
+{
+    $student = DB::table('active_students')->where('student_id', $id)->first();
+    if (!$student) {
+        return redirect()->back()->with('error', 'Student not found.');
+    }
+
+    DB::table('active_students')
+        ->where('student_id', $id)
+        ->update(['is_restricted' => !$student->is_restricted]);
+
+    return redirect()->back()->with('success', 'Restriction status updated.');
+}
+
+
 
 }
