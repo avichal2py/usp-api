@@ -13,6 +13,23 @@
             </div>
         @endif
 
+        <div class="search-container">
+            <form method="GET" action="{{ route('admin.restrict.search') }}" class="search-form">
+                <div class="search-input-group">
+                    <input type="text" name="search" placeholder="Search by ID, name or email..." 
+                           value="{{ request('search') }}" class="search-input">
+                    <button type="submit" class="search-button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    @if(request('search'))
+                        <a href="{{ route('admin.restrict.search') }}" class="clear-search">
+                            <i class="fas fa-times"></i> Clear
+                        </a>
+                    @endif
+                </div>
+            </form>
+        </div>
+
         <div class="students-table-container">
             <table class="students-table">
                 <thead>
@@ -25,7 +42,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                @foreach($students as $s)
+                @forelse($students as $s)
                     <tr class="{{ $s->is_restricted ? 'restricted' : '' }}">
                         <td>{{ $s->student_id }}</td>
                         <td>{{ $s->first_name }} {{ $s->last_name }}</td>
@@ -44,14 +61,31 @@
                             </form>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="5" class="no-results">
+                            @if(request('search'))
+                                No students found matching "{{ request('search') }}"
+                            @else
+                                No students found
+                            @endif
+                        </td>
+                    </tr>
+                @endforelse
                 </tbody>
             </table>
+            
+            {{-- Only show pagination if we're dealing with a paginator object --}}
+            @if(method_exists($students, 'hasPages') && $students->hasPages())
+                <div class="pagination-container">
+                    {{ $students->appends(request()->query())->links() }}
+                </div>
+            @endif
         </div>
     </div>
 
     <style>
-        .restrictions-container {
+.restrictions-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
@@ -179,7 +213,173 @@
 
         .toggle-btn.unrestrict:hover {
             background-color: #27ae60;
-        }
+        }        
+ /* Search Container Styles */
+.search-container {
+    margin-bottom: 2rem;
+    background: #ffffff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e9ecef;
+}
+
+.search-form {
+    max-width: 700px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.search-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border-radius: 50px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #dee2e6;
+}
+
+.search-input-group:focus-within {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    border-color: #3498db;
+}
+
+.search-input {
+    flex: 1;
+    padding: 0.875rem 1.5rem;
+    border: none;
+    font-size: 1rem;
+    outline: none;
+    background: transparent;
+    color: #495057;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.search-input::placeholder {
+    color: #adb5bd;
+    opacity: 1;
+    font-weight: 300;
+}
+
+.search-button {
+    position: relative;
+    height: 100%;
+    width: 56px;
+    padding:0.5%;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+}
+
+.search-button:hover {
+    background: linear-gradient(135deg, #2980b9, #3498db);
+    transform: translateY(-1px);
+}
+
+.search-button:active {
+    transform: translateY(0);
+}
+
+.search-button i {
+    font-size: 1.125rem;
+    transition: transform 0.2s ease;
+}
+
+.search-button:hover i {
+    transform: scale(1.1);
+}
+
+.clear-search {
+    position: absolute;
+    right: 70px;
+    color: #6c757d;
+    text-decoration: none;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.clear-search:hover {
+    color: #e74c3c;
+    background: rgba(255, 255, 255, 1);
+    transform: translateX(-2px);
+}
+
+.clear-search i {
+    font-size: 0.875rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .search-container {
+        padding: 1rem;
+    }
+    
+    .search-input {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9375rem;
+    }
+    
+    .search-button {
+        width: 50px;
+    }
+    
+    .clear-search {
+        right: 60px;
+        font-size: 0.8125rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .search-input-group {
+        border-radius: 8px;
+    }
+    
+    .search-input {
+        padding: 0.6875rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .search-button {
+        width: 46px;
+    }
+    
+    .clear-search {
+        right: 56px;
+        padding: 0.125rem 0.375rem;
+    }
+}
+
+.no-results {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+    font-size: 1.125rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.pagination-container {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+}
     </style>
 
     <script>
@@ -188,6 +388,14 @@
             btn.addEventListener('click', function() {
                 this.parentElement.style.display = 'none';
             });
+        });
+        
+        // Focus search input when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.querySelector('.search-input');
+            if (searchInput) {
+                searchInput.focus();
+            }
         });
     </script>
 @endsection

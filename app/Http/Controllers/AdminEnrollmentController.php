@@ -163,6 +163,31 @@ public function manageRestrictions()
     return view('admin.restrictions', compact('students'));
 }
 
+public function search(Request $request)
+{
+    $search = $request->input('search');
+    
+    $query = DB::table('active_students')
+        ->when($search, function($query) use ($search) {
+            return $query->where(function($q) use ($search) {
+                $q->where('student_id', 'like', "%{$search}%")
+                  ->orWhere('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('email_address', 'like', "%{$search}%");
+            });
+        })
+        ->orderBy('last_name');
+
+    // Check if we're doing a search or showing all results
+    if ($search) {
+        $students = $query->paginate(15);
+    } else {
+        $students = $query->get();
+    }
+
+    return view('admin.restrictions', compact('students'));
+}
+
 public function toggleRestriction($id)
 {
     $student = DB::table('active_students')->where('student_id', $id)->first();

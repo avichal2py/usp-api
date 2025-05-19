@@ -81,5 +81,5 @@ Route::get('/payment-required', [StudentFinanceController::class, 'showPaymentRe
 
 Route::get('/admin/restrict-students', [AdminEnrollmentController::class, 'manageRestrictions'])->name('admin.restrict.view');
 Route::post('/admin/toggle-student-restriction/{id}', [AdminEnrollmentController::class, 'toggleRestriction'])->name('admin.restrict.toggle');
-
+Route::get('/admin/restrict-students/search', [AdminEnrollmentController::class, 'search'])->name('admin.restrict.search');
 
