@@ -244,6 +244,10 @@
           <i class="fas fa-dollar"></i>
           <span>Pending Fee</span>
         </a>
+        <a href="{{ route('admin.viewForms') }}" class="nav-link {{ request()->routeIs('admin.viewForms') ? 'active' : '' }}">
+          <i class="fas fa-file"></i>
+          <span>Student Forms</span>
+        </a>
       </nav>
 
       <div class="logout-container">

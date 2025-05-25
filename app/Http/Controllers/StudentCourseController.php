@@ -274,6 +274,11 @@ public function downloadCompletedCourses()
         ];
     })->values()->toArray();
 
+    // ❗ Alert if no completed courses
+    if (empty($completedCourses)) {
+        return redirect()->route('student.visualizeCourse')->with('error', 'No completed courses found. Please complete a course first.');
+    }
+
     try {
         $response = Http::withHeaders([
             'Accept' => 'application/pdf',
@@ -294,13 +299,12 @@ public function downloadCompletedCourses()
         }
 
     } catch (ConnectionException | RequestException $e) {
-        // Log the error if needed
         \Log::error('PDF Service unavailable: ' . $e->getMessage());
     }
 
-    // If server fails or times out
     return response()->view('errors.feature-unavailable', [], 503);
 }
+
 
 
 
@@ -371,8 +375,69 @@ public function dismissAllNotifications(Request $request)
         ->whereIn('id', $ids)
         ->update(['student_notified' => true]);
 
+    DB::table('student_requests')
+    ->where('student_id', $ids)
+    ->whereIn('status', ['Approved', 'Rejected'])
+    ->where('student_notified', false)
+    ->update(['student_notified' => true]);
+
     return redirect()->back()->with('success', 'Notifications dismissed.');
 }
 
+
+
+
+public function showRequestForm()
+{
+    $student = session('user');
+    if (!$student || session('role') !== 'student') {
+        return redirect()->route('login')->with('error', 'Unauthorized');
+    }
+
+    return view('student.requestForm', compact('student'));
+}
+
+public function submitRequestForm(Request $request)
+{
+    $request->validate([
+        'request_type' => 'required|in:Graduation,Compassionate Pass,Aegrotat Pass,Re-sit',
+        'document' => 'required|file|mimes:pdf,jpg,png,docx|max:5120',
+    ]);
+
+    $studentId = session('user')->student_id;
+
+    $extension = $request->file('document')->getClientOriginalExtension();
+    $filename = $studentId . '_' . time() . '.' . $extension;
+
+    $path = $request->file('document')->storeAs('student_requests', $filename, 'public');
+
+    DB::table('student_requests')->insert([
+        'student_id' => $studentId,
+        'request_type' => $request->request_type,
+        'document_path' => 'student_requests/' . $filename,
+        'status' => 'Pending',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    return redirect()->route('student.home')->with('success', 'Request submitted.');
+}
+
+
+
+public function getDoc(){
+    return view('student.documents');
+}
+
+public function downloadDoc($filename) 
+{
+    $path = public_path("documents/{$filename}");
+
+    if (!file_exists($path)) {
+        abort(404, "File not found.");
+    }
+
+    return response()->download($path);
+}
 
 }

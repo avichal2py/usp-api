@@ -5,16 +5,24 @@
   <div class="dashboard-header">
     <h1><i class="fas fa-user-graduate"></i> Student Dashboard</h1>
     @php
-      $unreadCount = DB::table('grade_rechecks')
+      $gradeCount = DB::table('grade_rechecks')
         ->where('student_id', session('user')->student_id)
         ->whereIn('status', ['Reviewed', 'Rejected'])
         ->where('student_notified', false)
         ->count();
+        
+      $formCount = DB::table('student_requests')
+        ->where('student_id', session('user')->student_id)
+        ->whereIn('status', ['Approved', 'Rejected'])
+        ->where('student_notified', false)
+        ->count();
+        
+      $totalUnread = $gradeCount + $formCount;
     @endphp
     <div class="notification-bell" id="notificationBell">
       <i class="fas fa-bell"></i>
-      @if($unreadCount > 0)
-        <span class="notification-count">{{ $unreadCount }}</span>
+      @if($totalUnread > 0)
+        <span class="notification-count">{{ $totalUnread }}</span>
       @endif
     </div>
   </div>
@@ -45,31 +53,56 @@
       </div>
     </div>
 
-    {{-- Grade Recheck Notifications --}}
+    {{-- Combined Notifications --}}
     @php
-      $notifications = DB::table('grade_rechecks')
+      $gradeNotifications = DB::table('grade_rechecks')
         ->where('student_id', session('user')->student_id)
         ->whereIn('status', ['Reviewed', 'Rejected'])
         ->where('student_notified', false)
         ->get();
+
+      $formNotifications = DB::table('student_requests')
+        ->where('student_id', session('user')->student_id)
+        ->whereIn('status', ['Approved', 'Rejected'])
+        ->where('student_notified', false)
+        ->get();
+
+      $hasNotifications = $gradeNotifications->isNotEmpty() || $formNotifications->isNotEmpty();
     @endphp
 
-    @if ($notifications->isNotEmpty())
+    @if ($hasNotifications)
       <div class="notification-card" id="notificationCard">
         <div class="notification-header">
           <i class="fas fa-bell"></i>
-          <h3>Grade Recheck Notifications</h3>
-          <button class="close-notifications" id="closeNotifications">
-            <i class="fas fa-times"></i>
-          </button>
+          <h3>Notifications</h3>
+          <form method="POST" action="{{ route('student.dismissAllNotifications') }}">
+            @csrf
+            <button type="submit" class="close-notifications">
+              <i class="fas fa-check"></i> Mark All as Read
+            </button>
+          </form>
         </div>
         
         <div class="notification-list">
-          @foreach ($notifications as $note)
+          {{-- Grade Recheck Notifications --}}
+          @foreach ($gradeNotifications as $note)
             <div class="notification-item">
               <div class="notification-course">{{ $note->course_code }}</div>
               <div class="notification-message">
-                {{ $note->lecturer_message ?? 'Your grade recheck has been processed' }}
+                {{ $note->lecturer_message ?? 'Your grade recheck has been processed.' }}
+              </div>
+              <div class="notification-status {{ strtolower($note->status) }}">
+                {{ $note->status }}
+              </div>
+            </div>
+          @endforeach
+
+          {{-- Student Form Notifications --}}
+          @foreach ($formNotifications as $note)
+            <div class="notification-item">
+              <div class="notification-course">{{ strtoupper($note->request_type) }}</div>
+              <div class="notification-message">
+                Your {{ strtolower($note->request_type) }} request was <strong>{{ $note->status }}</strong>.
               </div>
               <div class="notification-status {{ strtolower($note->status) }}">
                 {{ $note->status }}
@@ -77,14 +110,6 @@
             </div>
           @endforeach
         </div>
-
-        <form method="POST" action="{{ route('student.dismissAllNotifications') }}" class="notification-actions">
-          @csrf
-          <input type="hidden" name="notification_ids" value="{{ $notifications->pluck('id')->implode(',') }}">
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-check"></i> Mark as Read
-          </button>
-        </form>
       </div>
     @endif
   @endif
@@ -262,15 +287,19 @@
   .close-notifications {
     background: none;
     border: none;
-    color: #666;
-    font-size: 16px;
+    color: #29a3a3;
+    font-size: 14px;
     cursor: pointer;
-    padding: 5px;
+    padding: 5px 10px;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
   }
 
   .close-notifications:hover {
-    color: #e74c3c;
+    color: #238c8c;
+    text-decoration: underline;
   }
 
   .notification-list {
@@ -280,14 +309,14 @@
   .notification-item {
     padding: 15px;
     border-radius: 6px;
-    background-color: #fef3c7;
+    background-color: #f5f7fa;
     margin-bottom: 10px;
-    border-left: 4px solid #f59e0b;
+    border-left: 4px solid #29a3a3;
   }
 
   .notification-course {
     font-weight: 600;
-    color: #b45309;
+    color: #2c3e50;
     margin-bottom: 5px;
   }
 
@@ -295,6 +324,10 @@
     color: #666;
     font-size: 14px;
     margin-bottom: 5px;
+  }
+
+  .notification-message strong {
+    color: #2c3e50;
   }
 
   .notification-status {
@@ -305,7 +338,8 @@
     display: inline-block;
   }
 
-  .notification-status.reviewed {
+  .notification-status.reviewed, 
+  .notification-status.approved {
     background-color: #d1fae5;
     color: #065f46;
   }
@@ -313,33 +347,6 @@
   .notification-status.rejected {
     background-color: #fee2e2;
     color: #b91c1c;
-  }
-
-  .notification-actions {
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  .btn {
-    padding: 10px 20px;
-    border-radius: 4px;
-    font-size: 14px;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s ease;
-    border: none;
-  }
-
-  .btn-primary {
-    background-color: #29a3a3;
-    color: white;
-  }
-
-  .btn-primary:hover {
-    background-color: #238c8c;
   }
 
   @media (max-width: 768px) {
@@ -351,8 +358,17 @@
     .quick-links {
       grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     }
+    
+    .notification-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    
+    .close-notifications {
+      align-self: flex-end;
+    }
   }
-
 
   .notification-card {
     transition: all 0.3s ease;
@@ -395,7 +411,6 @@
   document.addEventListener('DOMContentLoaded', function() {
     const notificationBell = document.getElementById('notificationBell');
     const notificationCard = document.getElementById('notificationCard');
-    const closeButton = document.getElementById('closeNotifications');
     
     if (notificationBell && notificationCard) {
       // Toggle notifications when bell is clicked
@@ -413,17 +428,6 @@
           bellIcon.classList.add('fa-bell');
         }
       });
-
-      // Close notifications when X button is clicked
-      if (closeButton) {
-        closeButton.addEventListener('click', function(e) {
-          e.stopPropagation();
-          notificationCard.classList.remove('show');
-          const bellIcon = notificationBell.querySelector('i');
-          bellIcon.classList.remove('fa-bell-slash');
-          bellIcon.classList.add('fa-bell');
-        });
-      }
 
       // Close notifications when clicking outside
       document.addEventListener('click', function(e) {

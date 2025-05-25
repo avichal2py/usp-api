@@ -13,9 +13,13 @@
       --red-dark: #c0392b;
       --text-light: #ffffff;
       --text-dark: #333333;
+      --text-muted: #666666;
       --bg-light: #f5f7fa;
-      --sidebar-width: 250px;
+      --border-color: #eaeaea;
+      --sidebar-width: 220px;
       --header-height: 70px;
+      --shadow: 0 2px 10px rgba(0,0,0,0.08);
+      --transition: all 0.3s ease;
     }
 
     * {
@@ -29,12 +33,14 @@
       color: var(--text-dark);
       background-color: var(--bg-light);
       min-height: 100vh;
+      line-height: 1.5;
     }
 
     /* Layout Structure */
     .app-container {
       display: flex;
-      min-height: 100vh;
+      min-height: calc(100vh - var(--header-height));
+      margin-top: var(--header-height);
     }
 
     /* Sidebar Styles */
@@ -44,10 +50,10 @@
       color: var(--text-light);
       display: flex;
       flex-direction: column;
+      flex-shrink: 0;
       position: fixed;
-      height: 100vh;
-      z-index: 100;
-      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      height: calc(100vh - var(--header-height));
+      overflow-y: auto;
     }
 
     .sidebar-header {
@@ -68,7 +74,7 @@
     }
 
     .nav-link {
-      padding: 12px 25px;
+      padding: 12px 20px;
       text-decoration: none;
       color: var(--text-light);
       display: flex;
@@ -76,7 +82,9 @@
       gap: 12px;
       margin: 5px 10px;
       border-radius: 5px;
-      transition: all 0.2s ease;
+      transition: var(--transition);
+      font-size: 0.95rem;
+      position: relative;
     }
 
     .nav-link:hover {
@@ -86,16 +94,15 @@
     .nav-link.active {
       background-color: var(--teal-darker);
       font-weight: 500;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
     }
 
     .notification-badge {
       background-color: var(--red-primary);
       color: var(--text-light);
+      font-size: 0.7rem;
       font-weight: bold;
-      font-size: 0.75rem;
-      padding: 2px 8px;
-      border-radius: 12px;
+      padding: 2px 6px;
+      border-radius: 10px;
       margin-left: auto;
     }
 
@@ -116,7 +123,8 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: all 0.2s ease;
+      transition: var(--transition);
+      font-size: 0.95rem;
     }
 
     .logout-btn:hover {
@@ -127,28 +135,47 @@
     .main-content {
       flex: 1;
       margin-left: var(--sidebar-width);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      padding: 30px;
+      min-height: calc(100vh - var(--header-height));
     }
 
-    /* Header Styles - Fixed alignment */
+    /* Header Styles */
     .top-header {
-      background-color: #ffffff;
+      background-color: white;
       padding: 0 30px;
       height: var(--header-height);
       display: flex;
       align-items: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      position: sticky;
+      justify-content: space-between;
+      box-shadow: var(--shadow);
+      position: fixed;
       top: 0;
-      z-index: 90;
+      left: 0;
+      right: 0;
+      z-index: 100;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logo {
+      height: 40px;
+      width: auto;
+    }
+
+    .logo-text {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--teal-primary);
     }
 
     .user-info {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 15px;
     }
 
     .user-avatar {
@@ -162,27 +189,20 @@
       justify-content: center;
       font-weight: bold;
       font-size: 16px;
-      flex-shrink: 0; /* Prevents avatar from shrinking */
     }
 
     .user-name {
       font-weight: 500;
       color: var(--text-dark);
-      white-space: nowrap; /* Prevents text from wrapping */
     }
 
     /* Content Area */
     .content-wrapper {
-      flex: 1;
-      padding: 30px;
-    }
-
-    .content-area {
       background-color: #ffffff;
       border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      min-height: calc(100vh - var(--header-height) - 60px);
+      box-shadow: var(--shadow);
       padding: 25px;
+      margin-bottom: 30px;
     }
 
     .page-header {
@@ -194,21 +214,25 @@
 
     /* Footer Styles */
     .main-footer {
-      background-color: #ffffff;
+      background-color: white;
       padding: 15px 30px;
       text-align: center;
       font-size: 0.85rem;
-      color: #666;
-      border-top: 1px solid #eee;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border-color);
+      margin-left: var(--sidebar-width);
     }
 
     @media (max-width: 768px) {
       .sidebar {
         width: 70px;
-        overflow: hidden;
       }
       
-      .sidebar-header h2, .nav-link span, .logout-btn span {
+      .sidebar-header h2, 
+      .nav-link span, 
+      .logout-btn span,
+      .user-name,
+      .logo-text {
         display: none;
       }
       
@@ -227,28 +251,47 @@
       
       .main-content {
         margin-left: 70px;
-      }
-
-      .content-wrapper {
-        padding: 15px;
-      }
-
-      .content-area {
         padding: 20px;
       }
 
-      .user-name {
-        display: none;
+      .content-wrapper {
+        padding: 20px;
+      }
+
+      .main-footer {
+        margin-left: 70px;
+        padding: 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .top-header {
+        padding: 0 15px;
+      }
+      
+      .main-content {
+        padding: 15px;
       }
     }
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
+  <header class="top-header">
+    <div class="logo-container">
+      <img src="{{ asset('images/icon.jpg') }}" alt="University Logo" class="logo">
+      <span class="logo-text">Lecturer Panel</span>
+    </div>
+    <div class="user-info">
+      <span class="user-name">{{ Auth::user()->name ?? 'Lecturer' }}</span>
+      <div class="user-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'L', 0, 1)) }}</div>
+    </div>
+  </header>
+
   <div class="app-container">
     <div class="sidebar">
       <div class="sidebar-header">
-        <h2>Lecturer Panel</h2>
+        <h2>Menu</h2>
       </div>
       
       <nav class="nav-menu">
@@ -281,23 +324,16 @@
     </div>
 
     <div class="main-content">
-      <header class="top-header">
-        <div class="user-info">
-          <span class="user-name">Welcome, {{ Auth::user()->name ?? 'Lecturer' }}</span>
-          <div class="user-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'L', 0, 1)) }}</div>
-        </div>
-      </header>
-
       <div class="content-wrapper">
         <main class="content-area">
           @yield('content')
         </main>
       </div>
-
-      <footer class="main-footer">
-        <p>&copy; {{ date('Y') }} University Lecturer Panel. All rights reserved.</p>
-      </footer>
     </div>
   </div>
+
+  <footer class="main-footer">
+    <p>&copy; {{ date('Y') }} University Lecturer Panel. All rights reserved.</p>
+  </footer>
 </body>
 </html>

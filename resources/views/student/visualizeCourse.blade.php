@@ -1,6 +1,15 @@
 @extends('student.layout')
 
 @section('content')
+
+@if (session('error'))
+    <div class="alert alert-danger">
+        {{ session('error') }}
+    </div>
+@endif
+
+
+
 <div class="visualization-container">
   <div class="visualization-header">
     <h1><i class="fas fa-project-diagram"></i> Course Progress Visualization</h1>
@@ -161,6 +170,20 @@
 </div>
 
 <style>
+  .alert {
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 500;
+  }
+
+  .alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+
   .visualization-container {
     padding: 25px;
     height: calc(100vh - 120px);

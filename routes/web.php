@@ -73,6 +73,8 @@ Route::post('/lecturer/grade-rechecks/{id}/reject', [LecturerController::class, 
 
 
 Route::post('/student/dismiss-all-notifications', [StudentCourseController::class, 'dismissAllNotifications'])->name('student.dismissAllNotifications');
+Route::get('/student/request-form', [StudentCourseController::class, 'showRequestForm'])->name('student.requestForm');
+Route::post('/student/request-form', [StudentCourseController::class, 'submitRequestForm'])->name('student.submitRequestForm');
 
 
 Route::get('/payment-required', [StudentFinanceController::class, 'showPaymentRequired'])
@@ -83,3 +85,13 @@ Route::get('/admin/restrict-students', [AdminEnrollmentController::class, 'manag
 Route::post('/admin/toggle-student-restriction/{id}', [AdminEnrollmentController::class, 'toggleRestriction'])->name('admin.restrict.toggle');
 Route::get('/admin/restrict-students/search', [AdminEnrollmentController::class, 'search'])->name('admin.restrict.search');
 
+Route::get('/admin/forms', [AdminEnrollmentController::class, 'viewStudentForms'])->name('admin.viewForms');
+Route::post('/admin/forms/{id}/approve', [AdminEnrollmentController::class, 'approveStudentForm'])->name('admin.approveForm');
+Route::post('/admin/forms/{id}/reject', [AdminEnrollmentController::class, 'rejectStudentForm'])->name('admin.rejectForm');
+
+Route::get('/download-request/{filename}', [StudentCourseController::class, 'downloadDoc'])
+    ->name('student.downloadDoc');
+Route::get('/docs', [StudentCourseController::class, 'getDoc'])->name('student.docs');
+
+Route::get('/admin/download-student-doc/{filename}', [AdminEnrollmentController::class, 'downloadStudentDoc'])
+    ->name('admin.downloadStudentDoc');

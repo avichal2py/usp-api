@@ -204,4 +204,67 @@ public function toggleRestriction($id)
 
 
 
+
+
+
+public function viewStudentForms()
+{
+    $forms = DB::table('student_requests')
+        ->join(DB::raw('active_students'), function ($join) {
+            $join->on(
+                DB::raw('CONVERT(student_requests.student_id USING utf8mb4) COLLATE utf8mb4_unicode_ci'),
+                '=',
+                DB::raw('CONVERT(active_students.student_id USING utf8mb4) COLLATE utf8mb4_unicode_ci')
+            );
+        })
+        ->select(
+            'student_requests.*',
+            'active_students.first_name',
+            'active_students.last_name',
+            'active_students.program_name'
+        )
+        ->where('student_requests.status', 'Pending')
+        ->get();
+
+    return view('admin.reviewStudentForms', compact('forms'));
+}
+
+
+public function approveStudentForm($id)
+{
+    DB::table('student_requests')->where('id', $id)->update([
+        'status' => 'Approved',
+        'student_notified' => false,
+        'updated_at' => now()
+    ]);
+
+    return back()->with('success', 'Student form approved and student will be notified.');
+}
+
+public function rejectStudentForm($id)
+{
+    DB::table('student_requests')->where('id', $id)->update([
+        'status' => 'Rejected',
+        'student_notified' => false,
+        'updated_at' => now()
+    ]);
+
+    return back()->with('success', 'Student form rejected and student will be notified.');
+}
+
+
+public function downloadStudentDoc($filename)
+{
+    $path = storage_path("app/public/student_requests/{$filename}"); // ✅ FIXED folder name
+
+    if (!file_exists($path)) {
+        abort(404, 'File not found.');
+    }
+
+    return response()->download($path);
+}
+
+
+
+
 }
