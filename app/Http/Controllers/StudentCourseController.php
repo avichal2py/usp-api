@@ -88,7 +88,6 @@ class StudentCourseController extends Controller
 
     public function visualCourses(Request $request)
     {
-        // 🟢 Check for student ID from session or query
         $student = null;
         $studentId = null;
     
@@ -369,20 +368,39 @@ public function applyGradeRecheck(Request $request)
 
 public function dismissAllNotifications(Request $request)
 {
-    $ids = explode(',', $request->notification_ids);
+    if (session()->has('user')) {
+        $studentId = session('user')->student_id;
 
-    DB::table('grade_rechecks')
-        ->whereIn('id', $ids)
-        ->update(['student_notified' => true]);
+        // Handle grade recheck notifications
+        $gradeIds = explode(',', $request->grade_notification_ids);
+        $gradeIds = array_filter($gradeIds);
+        
+        if (!empty($gradeIds)) {
+            DB::table('grade_rechecks')
+                ->where('student_id', $studentId)
+                ->whereIn('id', $gradeIds)
+                ->whereIn('status', ['Reviewed', 'Rejected'])
+                ->where('student_notified', false)
+                ->update(['student_notified' => true]);
+        }
 
-    DB::table('student_requests')
-    ->where('student_id', $ids)
-    ->whereIn('status', ['Approved', 'Rejected'])
-    ->where('student_notified', false)
-    ->update(['student_notified' => true]);
+        // Handle form notifications
+        $formIds = explode(',', $request->form_notification_ids);
+        $formIds = array_filter($formIds);
+        
+        if (!empty($formIds)) {
+            DB::table('student_requests')
+                ->where('student_id', $studentId)
+                ->whereIn('id', $formIds)
+                ->whereIn('status', ['Approved', 'Rejected'])
+                ->where('student_notified', false)
+                ->update(['student_notified' => true]);
+        }
+    }
 
     return redirect()->back()->with('success', 'Notifications dismissed.');
 }
+
 
 
 

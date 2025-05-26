@@ -77,10 +77,12 @@
           <h3>Notifications</h3>
           <form method="POST" action="{{ route('student.dismissAllNotifications') }}">
             @csrf
+            <input type="hidden" name="grade_notification_ids" value="{{ $gradeNotifications->pluck('id')->join(',') }}">
+            <input type="hidden" name="form_notification_ids" value="{{ $formNotifications->pluck('id')->join(',') }}">
             <button type="submit" class="close-notifications">
-              <i class="fas fa-check"></i> Mark All as Read
+                <i class="fas fa-check"></i> Mark All as Read
             </button>
-          </form>
+        </form>
         </div>
         
         <div class="notification-list">

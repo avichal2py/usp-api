@@ -16,8 +16,8 @@ class DatabaseSeeder extends Seeder
         User::create([
             'emp_id' => '10001',
             'name' => 'John Doe',
-            'username' => 'admin_john',
-            'password' => md5('admin123'), // Use MD5 for password hashing
+            'username' => 'JohnD',
+            'password' => md5('admin123'),
             'email' => 'john.doe@example.com',
             'role' => '1'
         ]);
