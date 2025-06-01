@@ -58,13 +58,13 @@ Route::post('/admin/enrollments/{id}/reject', [AdminEnrollmentController::class,
 Route::post('/student/register-course', [StudentCourseController::class, 'register'])->name('student.register-course');
 Route::get('/student/courses', [StudentRegistrationController::class, 'getCoursesByProgram'])
     ->name('student.courses')->middleware('restrict.student');
-Route::get('/student/visual-courses', [StudentCourseController::class, 'visualCourses'])->name('student.visualizeCourse');
+Route::get('/student/visual-courses', [StudentCourseController::class, 'visualCourses'])->name('student.visualizeCourse')->middleware('restrict.student');
 Route::get('/student/download-completed-courses', [StudentCourseController::class, 'downloadCompletedCourses'])
     ->name('student.downloadCompletedCourses');
 
 Route::get('/student/finance/download', [StudentFinanceController::class, 'downloadFinancePDF'])->name('student.downloadFinancePDF');
 Route::get('/student/finance', [StudentFinanceController::class, 'showFinancePage'])->name('student.finance');
-Route::get('/student/recheck-courses', [StudentCourseController::class, 'showRecheckCourses'])->name('student.recheckCourses');
+Route::get('/student/recheck-courses', [StudentCourseController::class, 'showRecheckCourses'])->name('student.recheckCourses')->middleware('restrict.student');
 Route::post('/student/apply-recheck', [StudentCourseController::class, 'applyGradeRecheck'])->name('student.applyRecheck');
 
 Route::get('/lecturer/grade-rechecks', [LecturerController::class, 'viewGradeRecheckRequests'])->name('lecturer.gradeRechecks');
@@ -73,7 +73,7 @@ Route::post('/lecturer/grade-rechecks/{id}/reject', [LecturerController::class, 
 
 
 Route::post('/student/dismiss-all-notifications', [StudentCourseController::class, 'dismissAllNotifications'])->name('student.dismissAllNotifications');
-Route::get('/student/request-form', [StudentCourseController::class, 'showRequestForm'])->name('student.requestForm');
+Route::get('/student/request-form', [StudentCourseController::class, 'showRequestForm'])->name('student.requestForm')->middleware('restrict.student');
 Route::post('/student/request-form', [StudentCourseController::class, 'submitRequestForm'])->name('student.submitRequestForm');
 
 
@@ -101,3 +101,4 @@ Route::get('/admin/login-logs', [AdminEnrollmentController::class, 'indexLogs'])
 Route::post('/admin/login-logs/archive', [AdminEnrollmentController::class, 'archiveLogs'])->name('admin.loginLogs.archive');
 Route::get('/admin/login-logs/archived', [AdminEnrollmentController::class, 'archivedLogs'])->name('admin.loginLogs.archived');
 Route::post('/admin/login-logs/restore', [AdminEnrollmentController::class, 'restoreLogs'])->name('admin.loginLogs.restore');
+Route::get('/admin/restrict/live-search', [AdminEnrollmentController::class, 'liveSearch']);

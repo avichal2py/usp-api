@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>USP Portal Login</title>
+    <link rel="icon" type="image/x-icon" href="{{ asset('images/icon.jpg') }}">
+
     <style>
         * {
             box-sizing: border-box;

@@ -1,6 +1,15 @@
 @extends('admin.layout')
 
 @section('content')
+  @if(session('success'))
+    <div class="alert alert-success">
+      <i class="fas fa-check-circle"></i> {{ session('success') }}
+    </div>
+  @elseif(session('error'))
+    <div class="alert alert-error">
+      <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
+    </div>
+  @endif
 <div class="requests-container">
     <h2 class="requests-title">📂 Student Requests</h2>
 
@@ -50,6 +59,27 @@
 </div>
 
 <style>
+      .alert {
+    padding: 12px 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+  }
+
+  .alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border-left: 4px solid #28a745;
+  }
+
+  .alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-left: 4px solid #dc3545;
+  }
     .requests-container {
         max-width: 900px;
         margin: 20px auto;

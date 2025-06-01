@@ -375,10 +375,96 @@
     margin: 1rem 0;
 }
 
+/* Pagination Styles */
 .pagination-container {
     margin-top: 2rem;
     display: flex;
     justify-content: center;
+}
+
+.pagination-container .pagination {
+    display: flex;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.pagination-container .page-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pagination-container .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    height: 2.5rem;
+    padding: 0 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background-color: white;
+    color: #3498db;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.pagination-container .page-link:hover {
+    background-color: #f8f9fa;
+    border-color: #ced4da;
+    color: #2c7be5;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-container .page-item.active .page-link {
+    background-color: #3498db;
+    border-color: #3498db;
+    color: white;
+    box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
+}
+
+.pagination-container .page-item.disabled .page-link {
+    color: #adb5bd;
+    pointer-events: none;
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.pagination-container .page-item:first-child .page-link,
+.pagination-container .page-item:last-child .page-link {
+    padding: 0 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .pagination-container .page-link {
+        min-width: 2.25rem;
+        height: 2.25rem;
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .pagination-container .pagination {
+        gap: 0.25rem;
+    }
+    
+    .pagination-container .page-link {
+        min-width: 2rem;
+        height: 2rem;
+        padding: 0 0.5rem;
+        font-size: 0.8125rem;
+    }
+    
+    .pagination-container .page-item:first-child .page-link,
+    .pagination-container .page-item:last-child .page-link {
+        padding: 0 0.75rem;
+    }
 }
     </style>
 
