@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel</title>
+  <link rel="icon" type="image/x-icon" href="{{ asset('images/icon.jpg') }}">
   <style>
     :root {
       --teal-primary: #29a3a3;
@@ -31,6 +32,7 @@
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+      max-height: 100vh;
     }
 
     .header {
@@ -91,6 +93,7 @@
       flex-direction: column;
       padding-top: 20px;
       flex-shrink: 0;
+      max-height: 110vh;
     }
 
     .sidebar-header {
@@ -170,6 +173,8 @@
       border-radius: 8px;
       box-shadow: var(--shadow);
       transition: var(--transition);
+      max-height:100vh;
+      overflow-y: auto;
     }
 
     .footer {
@@ -247,6 +252,10 @@
         <a href="{{ route('admin.viewForms') }}" class="nav-link {{ request()->routeIs('admin.viewForms') ? 'active' : '' }}">
           <i class="fas fa-file"></i>
           <span>Student Forms</span>
+        </a>
+        <a href="{{ route('admin.loginLogs') }}" class="nav-link {{ request()->routeIs('admin.loginLogs') ? 'active' : '' }}">
+          <i class="fas fa-clock"></i>
+          <span>View Logs</span>
         </a>
       </nav>
 

@@ -4,6 +4,18 @@
 <div class="requests-container">
     <h2 class="requests-title">📂 Student Requests</h2>
 
+    <div class="filter-search-bar">
+        <input type="text" id="searchInput" placeholder="Search by student name or ID...">
+        <select id="filterType">
+            <option value="">All Types</option>
+            <option value="Graduation">Graduation</option>
+            <option value="Aegrotat Pass">Aegrotat Pass</option>
+            <option value="Compassionate Pass">Compassionate Pass</option>
+            <option value="Re-sit">Re-sit</option>
+        </select>
+    </div>
+
+
     @foreach ($forms as $form)
         <div class="request-card">
             <div class="request-info">
@@ -161,5 +173,57 @@
             width: 100%;
         }
     }
+
+    .filter-search-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 10px;
+}
+
+#searchInput,
+#filterType {
+    padding: 10px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    flex: 1;
+}
+
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('searchInput');
+    const filterType = document.getElementById('filterType');
+    const cards = document.querySelectorAll('.request-card');
+
+    function normalize(text) {
+        return text.toLowerCase().trim();
+    }
+
+    function filterRequests() {
+        const searchValue = normalize(searchInput.value);
+        const typeValue = filterType.value;
+
+        cards.forEach(card => {
+            const studentText = normalize(card.querySelector('.request-info').textContent);
+            const requestType = card.querySelector('.request-info p:nth-child(3)').textContent;
+
+            const matchesSearch = studentText.includes(searchValue);
+            const matchesType = !typeValue || requestType.includes(typeValue);
+
+            if (matchesSearch && matchesType) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    searchInput.addEventListener('input', filterRequests);
+    filterType.addEventListener('change', filterRequests);
+});
+</script>
+
 @endsection

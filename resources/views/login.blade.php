@@ -192,10 +192,10 @@
         </select>
 
         <label for="identifier">Employee/Student ID</label>
-        <input type="text" name="identifier" id="identifier" required>
+        <input type="text" name="identifier" id="identifier" required maxlength="9" placeholder="Enter your Employee or Student ID">
 
         <label for="password">Password</label>
-        <input type="password" name="password" id="password" required>
+        <input type="password" name="password" id="password" required maxlength="25" placeholder="Enter your password">
 
         <button type="submit">Login</button>
 

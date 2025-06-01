@@ -95,3 +95,9 @@ Route::get('/docs', [StudentCourseController::class, 'getDoc'])->name('student.d
 
 Route::get('/admin/download-student-doc/{filename}', [AdminEnrollmentController::class, 'downloadStudentDoc'])
     ->name('admin.downloadStudentDoc');
+
+
+Route::get('/admin/login-logs', [AdminEnrollmentController::class, 'indexLogs'])->name('admin.loginLogs');
+Route::post('/admin/login-logs/archive', [AdminEnrollmentController::class, 'archiveLogs'])->name('admin.loginLogs.archive');
+Route::get('/admin/login-logs/archived', [AdminEnrollmentController::class, 'archivedLogs'])->name('admin.loginLogs.archived');
+Route::post('/admin/login-logs/restore', [AdminEnrollmentController::class, 'restoreLogs'])->name('admin.loginLogs.restore');

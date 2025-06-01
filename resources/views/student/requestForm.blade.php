@@ -1,7 +1,14 @@
 @extends('student.layout')
 
 @section('content')
+
+      @if(session('success'))
+            <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i> {{ session('success') }}
+            </div>
+        @endif
 <div class="form-container">
+
     <h2 class="form-title">🎓 Apply for Special Request</h2>
 
     <a href="{{ route('student.docs') }}" class="doc-link">
@@ -16,8 +23,8 @@
             <select name="request_type" id="request_type" required>
                 <option value="">-- Select --</option>
                 <option value="Graduation">Graduation</option>
-                <option value="Compassionate Pass">Compassionate Pass</option>
                 <option value="Aegrotat Pass">Aegrotat Pass</option>
+                <option value="Compassionate Pass">Compassionate Pass</option>
                 <option value="Re-sit">Re-sit</option>
             </select>
         </div>
@@ -49,6 +56,12 @@
         font-size: 1.5rem;
         font-weight: 600;
     }
+
+      .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
 
     .doc-link {
         display: inline-flex;

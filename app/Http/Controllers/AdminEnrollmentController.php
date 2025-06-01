@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\NewStudentRegistration;
 use App\Models\ActiveStudent;
+use App\Models\LoginLog;
+
 
 class AdminEnrollmentController extends Controller
 {
@@ -265,6 +267,68 @@ public function downloadStudentDoc($filename)
 }
 
 
+/////////////////////////////////////////logs////////////////////////////////////
+    public function indexLogs(Request $request)
+    {
+        $query = LoginLog::query()->where('archived', false);
+
+        // Apply filters
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+        $logs = $query->orderByDesc('created_at')->paginate(5)->withQueryString();
+        return view('admin.logs', compact('logs'));
+    }
 
 
+    public function archiveLogs(Request $request)
+    {
+        $request->validate(['selected_logs' => 'required|array']);
+
+        LoginLog::whereIn('id', $request->selected_logs)->update(['archived' => true]);
+
+        return back()->with('success', 'Selected logs archived.');
+    }
+
+
+     public function archivedLogs(Request $request)
+    {
+        $query = LoginLog::query()->where('archived', true);
+
+        // Apply filters
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+        $logs = $query->orderByDesc('created_at')->paginate(20)->withQueryString();
+
+        return view('admin.archived', compact('logs'));
+    }
+
+
+    public function restoreLogs(Request $request)
+    {
+        $request->validate(['selected_logs' => 'required|array']);
+
+        LoginLog::whereIn('id', $request->selected_logs)->update(['archived' => false]);
+
+        return back()->with('success', 'Selected logs restored.');
+    }
 }

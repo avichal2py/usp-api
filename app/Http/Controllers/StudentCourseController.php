@@ -11,16 +11,19 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\ConnectionException;
+use App\Services\LoginLoggerService;
+
 
 
 class StudentCourseController extends Controller
 {
-    public function register(Request $request)
+    public function register(Request $request, LoginLoggerService $logger)
     {
         $request->validate([
             'student_id' => 'required|string',
             'course_code' => 'required|string',
         ]);
+        $ip = $request->ip();
     
         $studentId = $request->student_id;
         $courseCode = $request->course_code;
@@ -66,6 +69,7 @@ class StudentCourseController extends Controller
             DB::table('student_track_course')
                 ->where('id', $existing->id)
                 ->delete();
+                $logger->log('STUDENT', $request->student_id, 'SUCCESS', $ip, 'Course unregistered');
     
             return $request->expectsJson()
                 ? response()->json(['message' => 'Course unregistered.'])
@@ -78,6 +82,7 @@ class StudentCourseController extends Controller
                 'status' => 'Enrolled',
                 'registered_at' => now(),
             ]);
+            $logger->log('STUDENT', $request->student_id, 'SUCCESS', $ip, 'Course registered');
     
             return $request->expectsJson()
                 ? response()->json(['message' => 'Course registered successfully.'])
@@ -438,7 +443,7 @@ public function submitRequestForm(Request $request)
         'updated_at' => now(),
     ]);
 
-    return redirect()->route('student.home')->with('success', 'Request submitted.');
+    return redirect()->back()->with('success', 'Request submitted.');
 }
 
 

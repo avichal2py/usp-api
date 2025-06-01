@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\LoginLoggerService;
 
 class AuthController extends Controller
 {
@@ -64,7 +65,7 @@ public function showLoginForm()
     return view('login'); 
 }
 
-public function handleWebLogin(Request $request)
+public function handleWebLogin(Request $request, LoginLoggerService $logger)
 {
     $request->validate([
         'login_as' => 'required|in:employee,student',
@@ -72,13 +73,16 @@ public function handleWebLogin(Request $request)
         'password' => 'required',
     ]);
 
+    $ip = $request->ip();
+
     if ($request->login_as === 'employee') {
         $user = User::where('emp_id', $request->identifier)->first();
 
         if (!$user || $user->password !== md5($request->password)) {
+            $logger->log('EMPLOYEE', $request->identifier, 'FAIL', $ip, 'Login attempt failed');
             return back()->withErrors(['Invalid credentials']);
         }
-
+        $logger->log('EMPLOYEE', $user->emp_id, 'SUCCESS', $ip, 'Login successful');
         session([
             'user' => $user, 
             'role' => 'employee',
@@ -98,6 +102,7 @@ public function handleWebLogin(Request $request)
             ->first();
 
         if (!$student || md5($request->password) !== $student->password) {
+             $logger->log('STUDENT', $request->identifier, 'FAIL', $ip, 'Login attempt failed');
             return back()->withErrors(['Invalid credentials']);
         }
 
@@ -109,6 +114,8 @@ public function handleWebLogin(Request $request)
             'user' => $details, // ✅ unified key
             'role' => 'student',
         ]);
+
+        $logger->log('STUDENT', $student->student_id, 'SUCCESS', $ip, 'Login successful');
 
         return redirect()->route('student.home');
     }
