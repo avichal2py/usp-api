@@ -79,4 +79,23 @@ class StudentRequestTest extends TestCase
         // Check file was stored
         Storage::disk('public')->assertExists('student_requests');
     }
+
+
+    public function test_submit_request_with_invalid_file_type()
+{
+    $student = (object)['student_id' => 'S12345'];
+    Storage::fake('public');
+
+    $file = UploadedFile::fake()->create('document.exe', 1000, 'application/x-msdownload');
+
+    $response = $this->withSession(['user' => $student])->post('/student/request-form', [
+        'request_type' => 'Graduation',
+        'document' => $file,
+    ]);
+
+    $response->assertSessionHasErrors(['document']);
+}
+
+
+
 }

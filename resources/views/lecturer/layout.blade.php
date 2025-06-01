@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lecturer Panel</title>
+    <link rel="icon" type="image/x-icon" href="{{ asset('images/icon.jpg') }}">
+
   <style>
     :root {
       --teal-primary: #29a3a3;
