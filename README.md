@@ -64,3 +64,68 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+
+Student Management Service - Setup and User Guide
+Features
+•	Student registration and profile management
+•	Course enrollment tracking
+•	Attendance monitoring
+•	Grade recording and reporting
+•	PDF report generation
+Tech Stack
+•	Framework: Laravel
+•	Languages: PHP, HTML, CSS, JavaScript
+•	Database: MySQL
+•	PDF Generation: DomPDF
+•	IDE: Visual Studio Code
+Prerequisites
+•	PHP >= 8.1
+•	Composer
+•	MySQL
+•	Node.js and NPM
+•	Git
+Installation
+•	1. Clone the repository:
+   git clone https://github.com/yourusername/student-management-service.git
+•	2. Install PHP dependencies:
+   composer install
+•	3. Install JavaScript dependencies:
+   npm install
+•	4. Copy and configure environment variables:
+   cp .env.example .env
+•	5. Generate application key:
+   php artisan key:generate
+•	6. Run database migrations and seeders:
+   php artisan migrate --seed
+•	7. Compile assets:
+   npm run dev
+•	8. Start the development server:
+   php artisan serve (Access at http://localhost:8000)
+Usage
+•	Access the application via browser at http://localhost:8000.
+•	Log in using provided credentials or register a new user.
+•	Navigate dashboard to manage students, courses, attendance, and grades.
+PDF Generation
+•	DomPDF is used for generating PDF reports.
+•	To generate a report: Go to report section > Click 'Download PDF'.
+Deployment
+•	1. Set up a server with PHP, MySQL, Nginx/Apache.
+•	2. Clone the repository to the server.
+•	3. Set permissions for storage and bootstrap/cache.
+•	4. Configure the .env file for production.
+•	5. Run migrations:
+   php artisan migrate --force
+•	6. Compile assets:
+   npm run production
+•	7. Set up a virtual host pointing to the public directory.
+Recommended Hosting
+•	Use Cloudways for managed Laravel hosting.
+•	Features: One-click install, automated backups, Git workflows, 24/7 support.
+•	Supports cloud providers like DigitalOcean, AWS, Google Cloud.
+•	Visit: https://www.cloudways.com/en/laravel-hosting
+Contributing
+•	Fork the repository, create a branch, and submit a pull request with your changes.
+License
+•	This project is licensed under the MIT License.
+
